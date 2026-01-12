@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Category, HouseholdUser, CategoryWeight } from '@/lib/types/database'
 
@@ -57,7 +55,6 @@ const getWeightLabel = (weight: number | null): string => {
 }
 
 export default function WeightsPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [currentUser, setCurrentUser] = useState<HouseholdUser | null>(null)
@@ -86,7 +83,6 @@ export default function WeightsPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/auth/login')
         return
       }
 
@@ -98,7 +94,6 @@ export default function WeightsPage() {
         .single()
 
       if (userError || !householdUser) {
-        router.push('/auth/household-setup')
         return
       }
 
@@ -276,7 +271,7 @@ export default function WeightsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-white dark:bg-gray-950">
+      <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading categories...</p>
@@ -290,50 +285,49 @@ export default function WeightsPage() {
   const allGroupsOrder: CategoryGroup[] = ['features', 'size', 'neighborhood', 'transportation', 'yard']
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <Link href="/dashboard" className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                HouseRater
-              </Link>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Category Weights
-              </p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Page Header */}
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Priorities
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Rate how important each category is to you (0=not important, 5=very important)
+          </p>
+        </div>
+        {saving && (
+          <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+            <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Saving...
+          </span>
+        )}
+      </div>
+
+        {/* Info Box */}
+        <div className="mb-6 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <div className="flex items-center gap-3">
-              {saving && (
-                <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
-                  <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Saving...
-                </span>
-              )}
-              <Link
-                href="/dashboard"
-                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                Back
-              </Link>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-blue-900 dark:text-blue-200">About Category Weights</h3>
+              <div className="mt-2 text-sm text-blue-800 dark:text-blue-300">
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Rate each category from 0 (not important) to 5 (very important)</li>
+                  <li>Your ratings auto-save as you adjust them</li>
+                  <li>Cards change color: dark gray (0) to cool green (5)</li>
+                  <li>Groups auto-collapse when complete and expand the next</li>
+                  <li>These weights will influence your final house scores</li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
-        {/* Page Header */}
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Rate Category Importance
-          </h2>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Use the sliders to rate how important each category is to you (0=not important, 5=very important)
-          </p>
         </div>
 
         {/* Progress Stats */}
@@ -481,29 +475,6 @@ export default function WeightsPage() {
           })}
         </div>
 
-        {/* Info Box */}
-        <div className="mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-900 dark:text-blue-200">About Category Weights</h3>
-              <div className="mt-2 text-sm text-blue-800 dark:text-blue-300">
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Rate each category from 0 (not important) to 5 (very important)</li>
-                  <li>Your ratings auto-save as you adjust them</li>
-                  <li>Cards change color: dark gray (0) to cool green (5)</li>
-                  <li>Groups auto-collapse when complete and expand the next</li>
-                  <li>These weights will influence your final house scores</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
     </div>
   )
 }

@@ -46,7 +46,6 @@ export default function NewHousePage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      router.push('/auth/login')
       return
     }
 
@@ -57,7 +56,6 @@ export default function NewHousePage() {
       .single()
 
     if (userError || !householdUser) {
-      router.push('/auth/household-setup')
       return
     }
 
@@ -185,32 +183,26 @@ export default function NewHousePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <Link href="/dashboard" className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                HouseRater
-              </Link>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Add New House
-              </p>
-            </div>
-            <Link
-              href="/dashboard/houses"
-              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              Back to Houses
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Breadcrumb */}
+      <div className="mb-4">
+        <Link
+          href="/dashboard/houses"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Houses
+        </Link>
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
-        <form onSubmit={handleSubmit}>
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Add New House</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Enter the details of a house you're considering</p>
+      </div>
+      <form onSubmit={handleSubmit}>
           {/* Address Section */}
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
@@ -483,7 +475,6 @@ export default function NewHousePage() {
             </Link>
           </div>
         </form>
-      </main>
     </div>
   )
 }

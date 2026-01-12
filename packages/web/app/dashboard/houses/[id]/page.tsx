@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { House, HouseholdUser } from '@/lib/types/database'
 
 export default function HouseDetailsPage() {
-  const router = useRouter()
   const params = useParams()
+  const router = useRouter()
   const houseId = params.id as string
 
   const [loading, setLoading] = useState(true)
@@ -27,7 +27,6 @@ export default function HouseDetailsPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/auth/login')
         return
       }
 
@@ -39,7 +38,6 @@ export default function HouseDetailsPage() {
         .single()
 
       if (userError || !householdUser) {
-        router.push('/auth/household-setup')
         return
       }
 
@@ -131,7 +129,7 @@ export default function HouseDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-white dark:bg-gray-950">
+      <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading house details...</p>
@@ -142,26 +140,17 @@ export default function HouseDetailsPage() {
 
   if (error || !house) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <Link href="/dashboard" className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-              HouseRater
-            </Link>
-          </div>
-        </header>
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">House Not Found</h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">{error || 'The house you are looking for does not exist.'}</p>
-            <Link
-              href="/dashboard/houses"
-              className="inline-block px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-            >
-              Back to Houses
-            </Link>
-          </div>
-        </main>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">House Not Found</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{error || 'The house you are looking for does not exist.'}</p>
+          <Link
+            href="/dashboard/houses"
+            className="inline-block px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+          >
+            Back to Houses
+          </Link>
+        </div>
       </div>
     )
   }
@@ -172,31 +161,19 @@ export default function HouseDetailsPage() {
     : null
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <Link href="/dashboard" className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                HouseRater
-              </Link>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                House Details
-              </p>
-            </div>
-            <Link
-              href="/dashboard/houses"
-              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              Back to Houses
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Breadcrumb */}
+      <div className="mb-4">
+        <Link
+          href="/dashboard/houses"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Houses
+        </Link>
+      </div>
         {/* Archive Banner */}
         {!house.is_active && (
           <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex justify-between items-center">
@@ -482,7 +459,6 @@ export default function HouseDetailsPage() {
             </div>
           </div>
         </div>
-      </main>
     </div>
   )
 }

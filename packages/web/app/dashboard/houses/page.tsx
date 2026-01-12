@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { House, HouseholdUser } from '@/lib/types/database'
@@ -24,7 +23,6 @@ interface HouseScore {
 }
 
 export default function HousesPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<HouseholdUser | null>(null)
   const [houses, setHouses] = useState<House[]>([])
@@ -43,7 +41,6 @@ export default function HousesPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/auth/login')
         return
       }
 
@@ -55,7 +52,6 @@ export default function HousesPage() {
         .single()
 
       if (userError || !householdUser) {
-        router.push('/auth/household-setup')
         return
       }
 
@@ -272,7 +268,7 @@ export default function HousesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-white dark:bg-gray-950">
+      <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading houses...</p>
@@ -282,31 +278,14 @@ export default function HousesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <Link href="/dashboard" className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                HouseRater
-              </Link>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Houses Under Consideration
-              </p>
-            </div>
-            <Link
-              href="/dashboard"
-              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              Back to Dashboard
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Page Title */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Houses</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Houses under consideration
+        </p>
+      </div>
         {/* Actions Bar */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="flex gap-3">
@@ -596,7 +575,6 @@ export default function HousesPage() {
             })}
           </div>
         )}
-      </main>
     </div>
   )
 }

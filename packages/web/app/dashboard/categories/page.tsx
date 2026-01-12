@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Category, HouseholdUser } from '@/lib/types/database'
 
@@ -18,7 +16,6 @@ const CATEGORY_GROUPS = {
 type CategoryGroup = keyof typeof CATEGORY_GROUPS
 
 export default function CategoriesPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<HouseholdUser | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
@@ -38,7 +35,6 @@ export default function CategoriesPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/auth/login')
         return
       }
 
@@ -50,7 +46,6 @@ export default function CategoriesPage() {
         .single()
 
       if (userError || !householdUser) {
-        router.push('/auth/household-setup')
         return
       }
 
@@ -156,11 +151,6 @@ export default function CategoriesPage() {
   }
 
   const handleDeleteCategory = async (category: Category) => {
-    if (category.is_default) {
-      setError('Cannot delete default categories')
-      return
-    }
-
     if (!confirm(`Are you sure you want to delete "${category.name}"? This action cannot be undone.`)) {
       return
     }
@@ -201,7 +191,7 @@ export default function CategoriesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-white dark:bg-gray-950">
+      <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading categories...</p>
@@ -214,36 +204,22 @@ export default function CategoriesPage() {
   const customCount = categories.filter(cat => !cat.is_default).length
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <Link href="/dashboard" className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                HouseRater
-              </Link>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Manage Categories
-              </p>
-            </div>
-            <Link
-              href="/dashboard"
-              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              Back to Dashboard
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Categories
+        </h1>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">
+          Manage the categories you'll use to rate houses.
+        </p>
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Rating Categories
-          </h2>
+      {/* Page Content */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+          Rating Categories
+        </h2>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Manage the categories you'll use to rate houses. Toggle categories on/off or add custom ones.
           </p>
@@ -447,17 +423,15 @@ export default function CategoriesPage() {
                             )}
                           </button>
 
-                          {!category.is_default && (
-                            <button
-                              onClick={() => handleDeleteCategory(category)}
-                              className="p-1.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                              title="Delete"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleDeleteCategory(category)}
+                            className="p-1.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                            title="Delete"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -483,14 +457,13 @@ export default function CategoriesPage() {
                   <li>Default categories are created automatically for each household</li>
                   <li>Toggle categories on/off to customize which ones you'll use for rating</li>
                   <li>Add custom categories specific to your needs</li>
-                  <li>Custom categories can be deleted, but default ones cannot</li>
+                  <li>All categories can be deleted if they don't fit your needs</li>
                   <li>Inactive categories won't appear when rating houses</li>
                 </ul>
               </div>
             </div>
           </div>
         </div>
-      </main>
     </div>
   )
 }

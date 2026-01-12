@@ -85,7 +85,6 @@ export default function RateHousePage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/auth/login')
         return
       }
 
@@ -97,7 +96,6 @@ export default function RateHousePage() {
         .single()
 
       if (userError || !householdUser) {
-        router.push('/auth/household-setup')
         return
       }
 
@@ -179,7 +177,7 @@ export default function RateHousePage() {
   }
 
   const handleGroupCompletion = useCallback((completedGroup: string) => {
-    const groups = Array.from(new Set(categories.map(c => c.category_group)))
+    const groups: string[] = Array.from(new Set(categories.map(c => c.category_group)))
     const currentIndex = groups.indexOf(completedGroup)
     const nextGroup = groups[currentIndex + 1]
 
@@ -408,7 +406,7 @@ export default function RateHousePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-white dark:bg-gray-950">
+      <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading house details...</p>
@@ -419,69 +417,63 @@ export default function RateHousePage() {
 
   if (error || !house) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <Link href="/dashboard" className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-              HouseRater
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            {error === 'No categories found. Please set up categories first.' ? 'No Categories Found' : 'House Not Found'}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
+          <div className="flex gap-4 justify-center">
+            <Link
+              href="/dashboard/houses"
+              className="inline-block px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+            >
+              Back to Houses
             </Link>
-          </div>
-        </header>
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              {error === 'No categories found. Please set up categories first.' ? 'No Categories Found' : 'House Not Found'}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-            <div className="flex gap-4 justify-center">
+            {error === 'No categories found. Please set up categories first.' && (
               <Link
-                href="/dashboard/houses"
-                className="inline-block px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                href="/dashboard/categories"
+                className="inline-block px-6 py-3 border-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               >
-                Back to Houses
+                Go to Categories
               </Link>
-              {error === 'No categories found. Please set up categories first.' && (
-                <Link
-                  href="/dashboard/categories"
-                  className="inline-block px-6 py-3 border-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                >
-                  Go to Categories
-                </Link>
-              )}
-            </div>
+            )}
           </div>
-        </main>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <Link href="/dashboard" className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                HouseRater
-              </Link>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Rate House
-              </p>
-            </div>
-            <Link
-              href={`/dashboard/houses/${houseId}`}
-              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              Back to House Details
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Breadcrumb */}
+      <div className="mb-4">
+        <Link
+          href={`/dashboard/houses/${houseId}`}
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to House Details
+        </Link>
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
-        {/* House Context Bar */}
+      {/* Rating Tips */}
+        <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-2">
+            Rating Tips
+          </h3>
+          <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
+            <li>Rate each category based on how well this house performs in that area</li>
+            <li>Your ratings auto-save as you move the sliders</li>
+            <li>Use notes to capture specific details or thoughts</li>
+            <li>You can come back and edit ratings anytime</li>
+            <li>Your ratings will be combined with your weights to calculate final scores</li>
+          </ul>
+        </div>
+
+      {/* House Context Bar */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
           <div className="flex justify-between items-start">
             <div>
@@ -674,20 +666,6 @@ export default function RateHousePage() {
           })}
         </div>
 
-        {/* Help Box */}
-        <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-2">
-            Rating Tips
-          </h3>
-          <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
-            <li>Rate each category based on how well this house performs in that area</li>
-            <li>Your ratings auto-save as you move the sliders</li>
-            <li>Use notes to capture specific details or thoughts</li>
-            <li>You can come back and edit ratings anytime</li>
-            <li>Your ratings will be combined with your weights to calculate final scores</li>
-          </ul>
-        </div>
-      </main>
     </div>
   )
 }

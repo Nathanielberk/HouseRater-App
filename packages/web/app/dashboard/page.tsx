@@ -1,15 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import type { Household, HouseholdUser } from '@/lib/types/database'
+import type { HouseholdUser } from '@/lib/types/database'
 
 export default function DashboardPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [household, setHousehold] = useState<Household | null>(null)
   const [currentUser, setCurrentUser] = useState<HouseholdUser | null>(null)
   const [householdMembers, setHouseholdMembers] = useState<HouseholdUser[]>([])
 
@@ -23,7 +20,6 @@ export default function DashboardPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/auth/login')
         return
       }
 
@@ -35,22 +31,10 @@ export default function DashboardPage() {
         .single()
 
       if (userError || !householdUser) {
-        router.push('/auth/household-setup')
         return
       }
 
       setCurrentUser(householdUser)
-
-      // Get household details
-      const { data: householdData } = await supabase
-        .from('households')
-        .select('*')
-        .eq('id', householdUser.household_id)
-        .single()
-
-      if (householdData) {
-        setHousehold(householdData)
-      }
 
       // Get all household members
       const { data: members } = await supabase
@@ -70,15 +54,9 @@ export default function DashboardPage() {
     }
   }
 
-  const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/')
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-white dark:bg-gray-950">
+      <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading dashboard...</p>
@@ -88,31 +66,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">HouseRater</h1>
-              {household && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {household.name}
-                </p>
-              )}
-            </div>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -245,7 +199,7 @@ export default function DashboardPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
                   </svg>
                 </div>
-                <h4 className="ml-3 font-semibold text-gray-900 dark:text-white">Set Category Weights</h4>
+                <h4 className="ml-3 font-semibold text-gray-900 dark:text-white">Your Priorities</h4>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Rate how important each feature is to you
@@ -270,7 +224,6 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
-      </main>
     </div>
   )
 }

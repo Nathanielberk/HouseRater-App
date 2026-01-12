@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Household, HouseholdUser } from '@/lib/types/database'
 
@@ -12,7 +10,6 @@ const HOUSEHOLD_LIMITS = {
 } as const
 
 export default function MembersPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [household, setHousehold] = useState<Household | null>(null)
   const [currentUser, setCurrentUser] = useState<HouseholdUser | null>(null)
@@ -34,7 +31,6 @@ export default function MembersPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/auth/login')
         return
       }
 
@@ -46,7 +42,6 @@ export default function MembersPage() {
         .single()
 
       if (userError || !householdUser) {
-        router.push('/auth/household-setup')
         return
       }
 
@@ -318,7 +313,7 @@ export default function MembersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-white dark:bg-gray-950">
+      <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading members...</p>
@@ -332,42 +327,16 @@ export default function MembersPage() {
   const isOwner = currentUser?.role === 'owner'
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <Link href="/dashboard" className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                HouseRater
-              </Link>
-              {household && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {household.name} - Members
-                </p>
-              )}
-            </div>
-            <Link
-              href="/dashboard"
-              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              Back to Dashboard
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Household Members
-          </h2>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Manage who has access to your household. Owners can invite users, manage categories, and change settings.
-          </p>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Team
+        </h1>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">
+          Manage who has access to your household.
+        </p>
+      </div>
 
         {/* Stats */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -629,7 +598,6 @@ export default function MembersPage() {
             </div>
           </div>
         </div>
-      </main>
     </div>
   )
 }

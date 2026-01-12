@@ -34,7 +34,7 @@ BEGIN
 
   -- Neighborhood (7 categories)
   INSERT INTO categories (household_id, name, category_group, is_default, display_order, is_active) VALUES
-  (p_household_id, 'Within 15 Minutes Drive of PCS', 'neighborhood', true, 21, true),
+  (p_household_id, 'Proximity to school', 'neighborhood', true, 21, true),
   (p_household_id, 'Walkable to Market/Groceries', 'neighborhood', true, 22, true),
   (p_household_id, '8-10 rated Neighborhood School', 'neighborhood', true, 23, true),
   (p_household_id, 'Walkable to Coffee Shop', 'neighborhood', true, 24, true),
