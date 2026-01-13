@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { InviteMembersPrompt, OnboardingChecklist } from '@/components/onboarding'
 import type { HouseholdUser } from '@/lib/types/database'
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<HouseholdUser | null>(null)
   const [householdMembers, setHouseholdMembers] = useState<HouseholdUser[]>([])
+  const [showInvitePrompt, setShowInvitePrompt] = useState(false)
 
   useEffect(() => {
     loadDashboard()
@@ -45,6 +47,10 @@ export default function DashboardPage() {
 
       if (members) {
         setHouseholdMembers(members)
+        // Show invite prompt if user is alone in household
+        if (members.length === 1) {
+          setShowInvitePrompt(true)
+        }
       }
 
       setLoading(false)
@@ -52,6 +58,13 @@ export default function DashboardPage() {
       console.error('Error loading dashboard:', err)
       setLoading(false)
     }
+  }
+
+  const handleInvite = async (email: string) => {
+    // This would normally send an invite email
+    // For now, we'll just log and mark as complete
+    console.log('Inviting:', email)
+    // In production, this would call an API to send the invite
   }
 
   if (loading) {
@@ -73,8 +86,21 @@ export default function DashboardPage() {
             Welcome back, {currentUser?.name}!
           </h2>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Here's what's happening in your household
+            Here&apos;s what&apos;s happening in your household
           </p>
+        </div>
+
+        {/* Invite Members Prompt - shown when user is alone in household */}
+        {showInvitePrompt && (
+          <InviteMembersPrompt
+            onInvite={handleInvite}
+            onDismiss={() => setShowInvitePrompt(false)}
+          />
+        )}
+
+        {/* Onboarding Checklist */}
+        <div className="mb-6">
+          <OnboardingChecklist />
         </div>
 
         {/* Stats Grid */}

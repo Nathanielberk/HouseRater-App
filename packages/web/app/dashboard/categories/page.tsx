@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { CategorySetupGuide, useTour } from '@/components/onboarding'
 import type { Category, HouseholdUser } from '@/lib/types/database'
 
 // Define category groups
@@ -24,6 +25,7 @@ export default function CategoriesPage() {
   const [newCategoryGroup, setNewCategoryGroup] = useState<CategoryGroup>('features')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const { completeStep } = useTour()
 
   useEffect(() => {
     loadCategories()
@@ -203,15 +205,22 @@ export default function CategoriesPage() {
   const activeCount = categories.filter(cat => cat.is_active).length
   const customCount = categories.filter(cat => !cat.is_default).length
 
+  const handleCategoryGuideComplete = () => {
+    completeStep('categories-review')
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Category Setup Guide Modal - shown on first visit */}
+      <CategorySetupGuide onDismiss={handleCategoryGuideComplete} />
+
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Categories
         </h1>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Manage the categories you'll use to rate houses.
+          Manage the categories you&apos;ll use to rate houses.
         </p>
       </div>
 

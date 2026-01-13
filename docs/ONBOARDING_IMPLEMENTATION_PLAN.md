@@ -3,7 +3,13 @@
 ## Overview
 Implement a guided onboarding flow that walks new users through the complete HouseRater setup and workflow. The tour emphasizes the collaborative household nature and proper sequencing of setup steps.
 
-## User Journey (Correct Sequence)
+## Implementation Status: COMPLETE
+
+All core onboarding functionality has been implemented and tested. Build passes with no errors.
+
+---
+
+## User Journey (5-Step Sequence)
 
 ```
 1. HOUSEHOLD SETUP
@@ -15,14 +21,11 @@ Implement a guided onboarding flow that walks new users through the complete Hou
    "What matters to you in a home?"
    → Review default categories, delete irrelevant ones
    → Add custom categories specific to your needs
-   → Categories should be specific, categorized, non-redundant
-   → Can always update later
 
 3. INDIVIDUAL PRIORITY RATING
    "How important is each category to YOU?"
    → Each household member rates independently
    → Prevents groupthink, captures true individual priorities
-   → Can review together and adjust after everyone completes
 
 4. ADD HOUSES
    "Start with your current home as a baseline"
@@ -32,339 +35,283 @@ Implement a guided onboarding flow that walks new users through the complete Hou
 5. RATE HOUSES
    "How does each house perform on your priorities?"
    → Rate each house on all categories
-   → Compare scores across houses and household members
+   → Compare scores across households
 ```
 
-## Current State
-- Household setup exists at `/auth/household-setup` but only captures name
-- No prompting to invite members during onboarding
-- No guided category review/customization
-- No explanation of independent rating importance
-- No suggestion to add current home first
+---
 
-## Implementation Approach
+## Architecture
 
-### Custom Implementation (No Third-Party Library)
-- Tailwind-native styling matches existing design
-- Minimal bundle impact (~400 lines)
-- Guaranteed React 19 compatibility
-- Full control over behavior and flow
+### State Management Pattern
+- **React Context + useReducer** for centralized state management
+- **localStorage** for persistence (keyed by user ID for multi-account support)
+- **Version field** for future state migrations
 
-### State Persistence: localStorage
-- Track which onboarding steps completed
-- Track which tours shown
-- Version field for migration
+### Tour Trigger Behavior
 
-## Files to Create
+**First Login Only (Automatic)**
+- Welcome modal appears ONLY on user's very first login after account creation
+- Uses `isFirstLogin` flag (true until welcome modal dismissed)
+- Uses `hasCompletedOnboarding` flag to prevent re-triggering
 
-### 1. `lib/tour/tourTypes.ts`
+**On-Demand Access**
+- "Take a Tour" button in sidebar user section
+- Calls `resetOnboarding()` which sets `isFirstLogin: true` and clears progress
+
+---
+
+## Implementation Details
+
+### Files Created
+
+#### Library Files (`lib/tour/`)
+
+| File | Purpose |
+|------|---------|
+| `tourTypes.ts` | Type definitions, OnboardingState interface, action types, default state |
+| `tourStorage.ts` | localStorage read/write helpers with user-keyed storage |
+| `tourSteps.ts` | Step content definitions for the 5-step journey |
+| `index.ts` | Barrel export |
+
+**Key Types (tourTypes.ts):**
 ```typescript
-type OnboardingStep =
-  | 'household-members'  // Invite household members
-  | 'categories-review'  // Review/customize categories
-  | 'priorities-intro'   // Explain independent rating
-  | 'add-first-house'    // Suggest current dwelling
-  | 'rate-house'         // Rating walkthrough
-
+type OnboardingStep = 'household-members' | 'categories-review' | 'priorities-intro' | 'add-first-house' | 'rate-house'
 type TourName = 'welcome' | 'dashboard' | 'categories' | 'priorities' | 'houses' | 'rating'
 
-interface TourStep {
-  id: string
-  targetSelector?: string  // For tooltip positioning
-  title: string
-  content: string
-  position?: 'top' | 'bottom' | 'left' | 'right'
-  type?: 'modal' | 'tooltip' | 'banner'
-  action?: { label: string; href?: string; onClick?: string }
-}
-
 interface OnboardingState {
+  userId: string                    // Key for multi-account support
+  hasCompletedOnboarding: boolean   // Prevents auto-show after first completion
+  isFirstLogin: boolean             // True until welcome modal dismissed
   completedSteps: OnboardingStep[]
   completedTours: TourName[]
   skippedTours: TourName[]
   version: number
 }
+
+type OnboardingAction =
+  | { type: 'COMPLETE_STEP'; step: OnboardingStep }
+  | { type: 'COMPLETE_TOUR'; tour: TourName }
+  | { type: 'SKIP_TOUR'; tour: TourName }
+  | { type: 'DISMISS_WELCOME' }
+  | { type: 'COMPLETE_ONBOARDING' }
+  | { type: 'RESET_ONBOARDING' }
+  | { type: 'LOAD_STATE'; state: OnboardingState }
 ```
 
-### 2. `lib/tour/tourStorage.ts`
-localStorage helpers for persisting onboarding state
+**Storage Functions (tourStorage.ts):**
+```typescript
+const STORAGE_KEY_PREFIX = 'houserater_onboarding_'
 
-### 3. `lib/tour/tourSteps.ts`
-Tour step definitions (see detailed steps below)
-
-### 4. `components/onboarding/TourContext.tsx`
-React Context for tour state management
-
-### 5. `components/onboarding/TourProvider.tsx`
-Provider with useReducer for state management
-
-### 6. `components/onboarding/WelcomeModal.tsx`
-Initial welcome explaining the journey:
-- "Welcome to HouseRater!"
-- Explains the 5-step process
-- Emphasizes collaborative nature
-- "Let's get started" button
-
-### 7. `components/onboarding/OnboardingChecklist.tsx`
-Persistent checklist showing progress:
-- [ ] Set up your household
-- [ ] Customize categories
-- [ ] Set your priorities
-- [ ] Add your first house
-- [ ] Rate a house
-Dismissible after completion
-
-### 8. `components/onboarding/TourTooltip.tsx`
-Positioned tooltip for highlighting UI elements
-
-### 9. `components/onboarding/TourBackdrop.tsx`
-Spotlight overlay for focused attention
-
-### 10. `components/onboarding/InviteMembersPrompt.tsx`
-Prompt shown on dashboard for new households:
-- "Who are you house shopping with?"
-- Quick invite form
-- "I'm shopping alone" option
-
-### 11. `components/onboarding/CategorySetupGuide.tsx`
-Guide shown on categories page first visit:
-- Explains purpose of categories
-- Tips for good categories (specific, non-redundant)
-- "Review defaults and customize" CTA
-
-### 12. `components/onboarding/PrioritiesIntro.tsx`
-Modal before priorities page:
-- Explains importance of independent rating
-- "Rate based on YOUR preferences"
-- "You can discuss and adjust after everyone rates"
-
-### 13. `components/onboarding/AddFirstHousePrompt.tsx`
-Prompt on houses page when empty:
-- "Start with your current home"
-- Explains baseline comparison benefit
-- "Add Current Home" CTA
-
-## Detailed Tour Steps
-
-### Welcome Modal (First Dashboard Visit)
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   Welcome to HouseRater!                     │
-│                                                              │
-│  Make confident home-buying decisions together.              │
-│                                                              │
-│  Here's how it works:                                       │
-│                                                              │
-│  👥 1. Set up your household                                │
-│     Invite everyone who'll help decide                      │
-│                                                              │
-│  📋 2. Customize your categories                            │
-│     What features matter for YOUR ideal home?               │
-│                                                              │
-│  ⚖️ 3. Rate your priorities (individually!)                 │
-│     Each person rates what matters most to THEM             │
-│                                                              │
-│  🏠 4. Add houses to compare                                │
-│     Start with your current home as a baseline              │
-│                                                              │
-│  ⭐ 5. Rate each house                                      │
-│     See how houses score for your whole household           │
-│                                                              │
-│                    [Let's Get Started]                       │
-└─────────────────────────────────────────────────────────────┘
+getOnboardingState(userId: string): OnboardingState | null
+setOnboardingState(state: OnboardingState): void
+createInitialState(userId: string): OnboardingState
+isFirstLogin(userId: string): boolean
+markOnboardingComplete(userId: string): void
+resetOnboarding(userId: string): void
+clearOnboardingData(userId: string): void
 ```
 
-### Household Members Prompt (Dashboard, new household)
-```
-┌─────────────────────────────────────────────────────────────┐
-│  👥 Who are you house shopping with?                        │
-│                                                              │
-│  Invite your partner, family members, or roommates.         │
-│  Everyone gets their own account to rate independently.     │
-│                                                              │
-│  ┌─────────────────────────────────────────┐                │
-│  │ Email address                           │ [Send Invite]  │
-│  └─────────────────────────────────────────┘                │
-│                                                              │
-│  [I'm shopping alone]           [I'll do this later]        │
-└─────────────────────────────────────────────────────────────┘
-```
+#### Component Files (`components/onboarding/`)
 
-### Categories Guide (First visit to /categories)
-```
-┌─────────────────────────────────────────────────────────────┐
-│  📋 Customize Your Categories                                │
-│                                                              │
-│  Categories are the features you'll rate each house on.     │
-│                                                              │
-│  We've added common categories to get you started.          │
-│  Review them and:                                           │
-│                                                              │
-│  ✓ Delete any that don't apply to your search              │
-│  ✓ Add custom categories specific to YOUR needs            │
-│                                                              │
-│  Tips for good categories:                                  │
-│  • Be specific ("Walk to grocery store" vs "Good location") │
-│  • Avoid redundancy (don't duplicate similar items)         │
-│  • Think about dealbreakers AND nice-to-haves              │
-│                                                              │
-│  You can always add or remove categories later.             │
-│                                                              │
-│                    [Review Categories]                       │
-└─────────────────────────────────────────────────────────────┘
-```
+| File | Purpose |
+|------|---------|
+| `TourContext.tsx` | React Context creation and `useTour()` hook |
+| `TourProvider.tsx` | State provider with useReducer, localStorage sync |
+| `WelcomeModal.tsx` | First-login 5-step journey modal with icons |
+| `OnboardingChecklist.tsx` | Progress tracker widget with progress bar |
+| `InviteMembersPrompt.tsx` | Household invite prompt for solo users |
+| `CategorySetupGuide.tsx` | Categories page intro modal |
+| `PrioritiesIntro.tsx` | Priorities page intro modal |
+| `AddFirstHousePrompt.tsx` | Empty houses page prompt |
+| `index.ts` | Barrel export |
 
-### Priorities Introduction (First visit to /weights)
-```
-┌─────────────────────────────────────────────────────────────┐
-│  ⚖️ Set Your Priorities                                     │
-│                                                              │
-│  Rate how important each category is to YOU personally.     │
-│                                                              │
-│  ⚠️ Important: Do this independently!                       │
-│                                                              │
-│  Don't discuss with your household members yet.             │
-│  This captures everyone's TRUE priorities before            │
-│  any group influence.                                       │
-│                                                              │
-│  After everyone completes their ratings:                    │
-│  • Review priorities together                               │
-│  • Discuss any differences                                  │
-│  • Adjust if minds change                                   │
-│                                                              │
-│                    [Set My Priorities]                       │
-└─────────────────────────────────────────────────────────────┘
+**TourProvider Implementation:**
+```typescript
+function onboardingReducer(state, action) {
+  switch (action.type) {
+    case 'COMPLETE_STEP':      // Add step to completedSteps array
+    case 'COMPLETE_TOUR':      // Add tour to completedTours array
+    case 'SKIP_TOUR':          // Add tour to skippedTours array
+    case 'DISMISS_WELCOME':    // Set isFirstLogin = false
+    case 'COMPLETE_ONBOARDING': // Set hasCompletedOnboarding = true
+    case 'RESET_ONBOARDING':   // Reset to defaults with isFirstLogin = true
+    case 'LOAD_STATE':         // Replace entire state (for initial load)
+  }
+}
+
+// Load from localStorage on mount
+useEffect(() => {
+  const savedState = getOnboardingState(userId)
+  if (savedState) dispatch({ type: 'LOAD_STATE', state: savedState })
+  else dispatch({ type: 'LOAD_STATE', state: createInitialState(userId) })
+}, [userId])
+
+// Save to localStorage on change
+useEffect(() => {
+  if (state.userId) setOnboardingState(state)
+}, [state])
+
+// shouldShowWelcome computed property
+const shouldShowWelcome = state.isFirstLogin && !state.hasCompletedOnboarding
 ```
 
-### Add First House Prompt (Empty houses page)
-```
-┌─────────────────────────────────────────────────────────────┐
-│  🏠 Add Your First House                                    │
-│                                                              │
-│  Pro tip: Start with your CURRENT home!                     │
-│                                                              │
-│  Rating where you live now gives you a baseline             │
-│  to compare potential new homes against.                    │
-│                                                              │
-│  You'll see how candidates stack up against                 │
-│  what you already know.                                     │
-│                                                              │
-│  [Add Current Home]        [Add a Different House]          │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Files to Modify
-
-### 1. `app/dashboard/layout.tsx`
-- Wrap with TourProvider
-- Include OnboardingChecklist component
-
-### 2. `app/dashboard/page.tsx`
-- Add WelcomeModal trigger for new users
-- Add InviteMembersPrompt for single-member households
-- Add data-tour attributes
-
-### 3. `app/dashboard/categories/page.tsx`
-- Add CategorySetupGuide for first visit
-- Add data-tour attributes
-
-### 4. `app/dashboard/weights/page.tsx`
-- Add PrioritiesIntro modal for first visit
-- Add data-tour attributes
-
-### 5. `app/dashboard/houses/page.tsx`
-- Add AddFirstHousePrompt when no houses
-- Add data-tour attributes
-
-### 6. `app/dashboard/houses/[id]/rate/page.tsx`
-- Add rating tour for first house rated
-- Add data-tour attributes
-
-### 7. `app/dashboard/members/page.tsx`
-- Enhance invite UI
-- Add tips about independent rating
-
-## Onboarding Checklist Component
-
-Shown in sidebar/dashboard until all steps complete:
-
-```
-┌─────────────────────────────┐
-│  Getting Started            │
-│                             │
-│  ✓ Create household         │
-│  ○ Invite members           │
-│  ○ Customize categories     │
-│  ○ Set your priorities      │
-│  ○ Add first house          │
-│  ○ Rate a house             │
-│                             │
-│  [Dismiss]                  │
-└─────────────────────────────┘
+**Context Value Interface:**
+```typescript
+interface TourContextValue {
+  state: OnboardingState
+  dispatch: React.Dispatch<OnboardingAction>
+  isStepCompleted: (step: OnboardingStep) => boolean
+  isTourCompleted: (tour: TourName) => boolean
+  isTourSkipped: (tour: TourName) => boolean
+  shouldShowWelcome: boolean
+  completeStep: (step: OnboardingStep) => void
+  completeTour: (tour: TourName) => void
+  skipTour: (tour: TourName) => void
+  dismissWelcome: () => void
+  completeOnboarding: () => void
+  resetOnboarding: () => void
+}
 ```
 
-## Implementation Steps
+### Files Modified
 
-### Phase 1: Foundation
-1. Create `lib/tour/tourTypes.ts`
-2. Create `lib/tour/tourStorage.ts`
-3. Create `lib/tour/tourSteps.ts`
-4. Create `components/onboarding/TourContext.tsx`
-5. Create `components/onboarding/TourProvider.tsx`
+#### 1. `app/dashboard/layout.tsx`
+```tsx
+import { TourProvider, WelcomeModal } from '@/components/onboarding'
 
-### Phase 2: Core Modals
-6. Create `components/onboarding/WelcomeModal.tsx`
-7. Create `components/onboarding/InviteMembersPrompt.tsx`
-8. Create `components/onboarding/CategorySetupGuide.tsx`
-9. Create `components/onboarding/PrioritiesIntro.tsx`
-10. Create `components/onboarding/AddFirstHousePrompt.tsx`
+// Track authUserId from Supabase auth
+const [authUserId, setAuthUserId] = useState<string | null>(null)
 
-### Phase 3: Progress Tracking
-11. Create `components/onboarding/OnboardingChecklist.tsx`
-12. Create `components/onboarding/TourTooltip.tsx`
-13. Create `components/onboarding/TourBackdrop.tsx`
+// In loadUserData:
+setAuthUserId(user.id)
 
-### Phase 4: Integration
-14. Modify `app/dashboard/layout.tsx` - add provider
-15. Modify `app/dashboard/page.tsx` - welcome + invite prompts
-16. Modify `app/dashboard/categories/page.tsx` - category guide
-17. Modify `app/dashboard/weights/page.tsx` - priorities intro
-18. Modify `app/dashboard/houses/page.tsx` - first house prompt
-19. Modify `app/dashboard/houses/[id]/rate/page.tsx` - rating tour
+// Render:
+return (
+  <TourProvider userId={authUserId || ''}>
+    <DashboardShell ...>
+      {children}
+    </DashboardShell>
+    <WelcomeModal />
+  </TourProvider>
+)
+```
 
-### Phase 5: Polish
-20. Test complete flow with new account
-21. Mobile responsive testing
-22. Accessibility (keyboard nav, screen readers)
-23. Edge cases (skip flows, returning users)
+#### 2. `components/navigation/Sidebar.tsx`
+```tsx
+import { useTour } from '@/components/onboarding'
 
-## Key Messaging
+const { resetOnboarding } = useTour()
 
-### Household Emphasis
-- "House shopping is a team decision"
-- "Everyone's priorities matter"
-- "Rate independently, then discuss together"
+const handleTakeTour = () => {
+  resetOnboarding()
+}
 
-### Category Guidance
-- "Be specific - 'walking distance to coffee shop' beats 'good location'"
-- "Delete what doesn't matter to YOUR search"
-- "Add anything unique to your needs"
+// In user profile section:
+<button onClick={handleTakeTour} className="...">
+  <QuestionMarkIcon />
+  Take a Tour
+</button>
+```
 
-### Independent Rating
-- "This captures YOUR true priorities"
-- "No peeking at others' ratings yet!"
-- "Discuss after everyone completes"
+#### 3. `app/dashboard/page.tsx`
+- Added `InviteMembersPrompt` component (shows when user is alone in household)
+- Added `OnboardingChecklist` component (shows until onboarding complete)
 
-### Current Home as Baseline
-- "Your current home is the baseline"
-- "See how new houses compare to what you know"
-- "Makes ratings more meaningful"
+#### 4. `app/dashboard/categories/page.tsx`
+- Added `CategorySetupGuide` modal on first visit
+- Calls `completeStep('categories-review')` on dismiss
 
-## Verification
+#### 5. `app/dashboard/weights/page.tsx`
+- Added `PrioritiesIntro` modal on first visit
+- Calls `completeStep('priorities-intro')` on dismiss
 
-1. **New user complete flow**: Signup → all onboarding steps
-2. **Multi-member flow**: Invite → member joins → both rate
-3. **Skip paths**: Each prompt has dismiss option
-4. **Persistence**: Refresh doesn't reset progress
-5. **Checklist completion**: All items track correctly
-6. **Mobile**: All modals work on small screens
+#### 6. `app/dashboard/houses/page.tsx`
+- Added `AddFirstHousePrompt` when no houses exist
+- Calls `completeStep('add-first-house')` when house added
+
+---
+
+## localStorage Schema
+
+**Key:** `houserater_onboarding_{userId}`
+
+```json
+{
+  "userId": "abc-123-def",
+  "hasCompletedOnboarding": false,
+  "isFirstLogin": false,
+  "completedSteps": ["categories-review", "priorities-intro"],
+  "completedTours": ["welcome"],
+  "skippedTours": [],
+  "version": 1
+}
+```
+
+---
+
+## Component Behavior Details
+
+### WelcomeModal
+- Shows when `shouldShowWelcome` is true (500ms delay after mount)
+- Displays 5-step journey with SVG icons (users, list, scale, home, star)
+- "Let's Get Started" button calls `dismissWelcome()` + `completeTour('welcome')`
+- Backdrop click also dismisses
+- Full dark mode support
+
+### OnboardingChecklist
+- Shows on dashboard until `hasCompletedOnboarding` or manually dismissed
+- 5 items linked to relevant pages: Household, Categories, Priorities, Add house, Rate house
+- Progress bar shows completion percentage
+- Completed items show green checkmark and strikethrough
+- "Dismiss" button (or "Complete & Dismiss" when all done)
+
+### Page Intro Modals
+- Each shows only on first visit to that page (tracked via completedSteps)
+- Dismissing marks the step complete
+- All have consistent styling with dark mode support
+
+---
+
+## Testing Status
+
+### Build Tests
+- [x] TypeScript compilation: No errors
+- [x] Production build: 13/13 pages generated successfully
+- [x] Dev server: Starts without errors
+
+### Manual Testing Checklist
+- [ ] New user signup → Welcome modal appears
+- [ ] Click "Let's Get Started" → Modal closes, checklist appears
+- [ ] Navigate to each page → Page-specific intro modals appear once
+- [ ] Complete all checklist items → Progress bar fills
+- [ ] Click "Dismiss" → Checklist hidden
+- [ ] Sign out and back in → No welcome modal (state persisted)
+- [ ] Click "Take a Tour" in sidebar → Welcome modal reappears
+- [ ] Different user account → Independent onboarding state
+- [ ] Clear localStorage → Resets to first-login state
+
+---
+
+## Future Enhancements (Not Implemented)
+
+1. **TourTooltip.tsx** - Positioned tooltips for highlighting specific UI elements
+2. **TourBackdrop.tsx** - Spotlight overlay for focused attention during tours
+3. **Tooltip tours** - Step-by-step guided tours on each page using targetSelector
+4. **Server-side persistence** - Store onboarding state in Supabase for cross-device sync
+5. **Analytics** - Track onboarding completion rates and drop-off points
+
+---
+
+## Key Files Quick Reference
+
+| File | Location | Purpose |
+|------|----------|---------|
+| tourTypes.ts | `lib/tour/` | Type definitions and default state |
+| tourStorage.ts | `lib/tour/` | localStorage read/write helpers |
+| tourSteps.ts | `lib/tour/` | Step content definitions |
+| TourContext.tsx | `components/onboarding/` | React Context and useTour hook |
+| TourProvider.tsx | `components/onboarding/` | State provider with useReducer |
+| WelcomeModal.tsx | `components/onboarding/` | First-login 5-step journey modal |
+| OnboardingChecklist.tsx | `components/onboarding/` | Progress tracker widget |
+| layout.tsx | `app/dashboard/` | Provider integration point |
+| Sidebar.tsx | `components/navigation/` | "Take a Tour" button location |

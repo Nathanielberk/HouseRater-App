@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { AddFirstHousePrompt } from '@/components/onboarding'
 import type { House, HouseholdUser } from '@/lib/types/database'
 
 interface CategoryScore {
@@ -30,6 +31,7 @@ export default function HousesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showArchived, setShowArchived] = useState(false)
   const [error, setError] = useState('')
+  const [showFirstHousePrompt, setShowFirstHousePrompt] = useState(false)
 
   useEffect(() => {
     loadHouses()
@@ -73,6 +75,11 @@ export default function HousesPage() {
       }
 
       setHouses(housesData || [])
+
+      // Show first house prompt if no houses exist
+      if (!housesData || housesData.length === 0) {
+        setShowFirstHousePrompt(true)
+      }
 
       // Load scoring data for all houses
       if (housesData && housesData.length > 0) {
@@ -279,6 +286,11 @@ export default function HousesPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Add First House Prompt Modal - shown when no houses exist */}
+      {showFirstHousePrompt && (
+        <AddFirstHousePrompt onDismiss={() => setShowFirstHousePrompt(false)} />
+      )}
+
       {/* Page Title */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Houses</h1>

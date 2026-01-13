@@ -4,6 +4,7 @@ import { useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import DashboardShell from '@/components/DashboardShell'
+import { TourProvider, WelcomeModal } from '@/components/onboarding'
 import type { Household, HouseholdUser } from '@/lib/types/database'
 
 interface DashboardLayoutProps {
@@ -15,6 +16,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [loading, setLoading] = useState(true)
   const [household, setHousehold] = useState<Household | null>(null)
   const [currentUser, setCurrentUser] = useState<HouseholdUser | null>(null)
+  const [authUserId, setAuthUserId] = useState<string | null>(null)
 
   useEffect(() => {
     loadUserData()
@@ -29,6 +31,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         router.push('/auth/login')
         return
       }
+
+      setAuthUserId(user.id)
 
       // Get current household user
       const { data: householdUser, error: userError } = await supabase
@@ -74,12 +78,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <DashboardShell
-      householdName={household?.name}
-      userName={currentUser?.name}
-      userEmail={currentUser?.email}
-    >
-      {children}
-    </DashboardShell>
+    <TourProvider userId={authUserId || ''}>
+      <DashboardShell
+        householdName={household?.name}
+        userName={currentUser?.name}
+        userEmail={currentUser?.email}
+      >
+        {children}
+      </DashboardShell>
+      <WelcomeModal />
+    </TourProvider>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { PrioritiesIntro } from '@/components/onboarding'
 import type { Category, HouseholdUser, CategoryWeight } from '@/lib/types/database'
 
 // Category groups
@@ -286,6 +287,9 @@ export default function WeightsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Priorities Intro Modal - shown on first visit */}
+      <PrioritiesIntro />
+
       {/* Page Header */}
       <div className="mb-6 flex justify-between items-start">
         <div>
