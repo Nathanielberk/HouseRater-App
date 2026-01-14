@@ -891,11 +891,186 @@ Build custom components using Tailwind patterns for MVP, evaluate shadcn/ui for 
 
 ---
 
+## 11. Audit Findings & Inconsistencies
+
+**Last Audit:** January 2026
+
+### Inconsistencies Found
+
+#### Typography Inconsistencies
+
+| Location | Issue | Standard | Actual |
+|----------|-------|----------|--------|
+| `categories/page.tsx` | Page title size | `text-3xl` | `text-2xl` |
+| `weights/page.tsx` | Page title size | `text-3xl` | `text-2xl` |
+| `houses/page.tsx` | Page title size | `text-3xl` | `text-2xl` |
+| `categories/page.tsx` | Has duplicate description | Single description | Two descriptions |
+
+**Recommendation:** Standardize all page titles to use `text-2xl` (current pattern) and update design standard to match.
+
+#### Container Width Inconsistencies
+
+| Location | Issue | Common Pattern | Actual |
+|----------|-------|----------------|--------|
+| `dashboard/page.tsx` | Container max-width | Varies | `max-w-7xl` |
+| `weights/page.tsx` | Container max-width | Varies | `max-w-4xl` |
+| `houses/page.tsx` | Container max-width | Varies | `max-w-7xl` |
+| `categories/page.tsx` | Container max-width | Varies | `max-w-7xl` |
+
+**Recommendation:** Document that content-dense pages use `max-w-4xl` while list/grid pages use `max-w-7xl`.
+
+#### Button Variant Inconsistencies
+
+| Location | Issue | Standard | Actual |
+|----------|-------|----------|--------|
+| `houses/page.tsx` | Add button | `bg-blue-600` | `bg-blue-600 dark:bg-blue-500` |
+| `categories/page.tsx` | Add button | `bg-blue-600` | `bg-blue-600` (no dark override) |
+
+**Recommendation:** Remove `dark:bg-blue-500` override - `bg-blue-600` works in both modes.
+
+#### Success/Error Message Inconsistencies
+
+| Location | Success Background | Error Background |
+|----------|-------------------|------------------|
+| `categories/page.tsx` | `bg-green-50 dark:bg-green-900/30` | `bg-red-50 dark:bg-red-900/30` |
+| `weights/page.tsx` | N/A | `bg-red-50 dark:bg-red-900/30` |
+| `signup/page.tsx` | N/A | `bg-red-50 dark:bg-red-900/20` |
+
+**Issue:** Inconsistent opacity in dark mode (`/30` vs `/20`)
+**Recommendation:** Standardize to `dark:bg-{color}-900/20` for all feedback messages.
+
+### Missing from Design Standards
+
+#### 1. Select/Dropdown Styles
+Found in `categories/page.tsx` but not documented:
+```tsx
+<select className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+```
+
+#### 2. Toggle Button Styles
+Found in `houses/page.tsx` - archive toggle:
+```tsx
+<button className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+  isActive
+    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
+}`}>
+```
+
+#### 3. Slider/Range Input Styles
+Found in `weights/page.tsx` - complex slider styling not documented:
+```tsx
+<input type="range" className="w-full h-3 rounded-lg appearance-none cursor-pointer
+  [&::-webkit-slider-thumb]:appearance-none
+  [&::-webkit-slider-thumb]:w-6
+  [&::-webkit-slider-thumb]:h-6
+  ..." />
+```
+
+#### 4. Progress Bar Styles
+Found in `OnboardingChecklist.tsx`:
+```tsx
+<div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full">
+  <div className="h-full bg-blue-600 rounded-full transition-all duration-300" />
+</div>
+```
+
+#### 5. Inline Saving Indicator
+Found in `weights/page.tsx`:
+```tsx
+<span className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+  <svg className="animate-spin h-4 w-4 mr-2">...</svg>
+  Saving...
+</span>
+```
+
+#### 6. Category Card States
+Found in `categories/page.tsx` - active/inactive category styling:
+```tsx
+category.is_active
+  ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20'
+  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'
+```
+
+#### 7. Weight Color Gradient
+Found in `weights/page.tsx` - 6-level gradient (different from rating gradient):
+- 0: Black/very dark (`bg-gray-900`)
+- 1: Dark gray (`bg-gray-700`)
+- 2: Medium gray (`bg-gray-500`)
+- 3: Light gray with cool tone (`bg-slate-400`)
+- 4: Cool teal green (`bg-teal-500`)
+- 5: Cool modern green (`bg-emerald-600`)
+
+#### 8. Score Color Gradient (Houses)
+Found in `houses/page.tsx` - percentage-based colors:
+- 90%+: Emerald (`rgb(16, 185, 129)`)
+- 75%+: Green (`rgb(34, 197, 94)`)
+- 60%+: Lime (`rgb(132, 204, 22)`)
+- 45%+: Yellow (`rgb(234, 179, 8)`)
+- 30%+: Orange (`rgb(249, 115, 22)`)
+- <30%: Red (`rgb(239, 68, 68)`)
+
+#### 9. Chiclet/Heatmap Visualization
+Found in `houses/page.tsx` - compact category visualization using inline styles.
+
+#### 10. Info Box Styles
+Found in multiple pages - standardized info box pattern:
+```tsx
+<div className="p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+  <div className="flex">
+    <div className="flex-shrink-0">{/* Icon */}</div>
+    <div className="ml-3">
+      <h3 className="text-sm font-medium text-blue-900 dark:text-blue-200">Title</h3>
+      <div className="mt-2 text-sm text-blue-800 dark:text-blue-300">
+        {/* Content */}
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+#### 11. Collapsible Section Pattern
+Found in `weights/page.tsx` - accordion-style group headers with progress bars.
+
+#### 12. Emoji Usage
+Found in `houses/page.tsx` - emoji used for property stats:
+- 🛏️ Bedrooms
+- 🛁 Bathrooms
+- 📏 Square footage
+
+**Note:** This violates the design standard that says "Only use emojis if user explicitly requests."
+**Recommendation:** Replace with SVG icons for consistency.
+
+### Code Quality Issues
+
+#### 1. Missing Closing Tags
+`categories/page.tsx` line 235 has unclosed `<div>` tag before stats grid.
+
+#### 2. Inconsistent Padding Values
+- Some pages use `py-6`, others use `py-8`
+- Should standardize to `py-8` for consistency
+
+#### 3. Inconsistent Button Padding
+- Primary buttons: `px-4 py-3` (auth pages)
+- Other buttons: `px-4 py-2` (dashboard pages)
+
+### Recommended Updates
+
+1. **Add missing component documentation** for Select, Toggle, Slider, Progress Bar
+2. **Standardize feedback message opacity** to `/20` in dark mode
+3. **Replace emojis** with SVG icons in houses page
+4. **Document weight and score color gradients** separately from rating gradient
+5. **Add collapsible section pattern** to patterns section
+6. **Clarify page container widths** (`max-w-4xl` vs `max-w-7xl`)
+
+---
+
 ## Changelog
 
 | Date | Version | Changes |
 |------|---------|---------|
 | Jan 2026 | 1.0 | Initial design standards document |
+| Jan 2026 | 1.1 | Added audit findings section with inconsistencies and missing items |
 
 ---
 
